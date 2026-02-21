@@ -1,126 +1,265 @@
 // gameManager.ts
 import { Room, User, Stroke } from "./types";
-import { getUsersInRoom, saveCanvasState, getCanvasState, resetCanvasState } from "./room";
+import { getUsersInRoom, saveCanvasState, getCanvasState, resetCanvasState, rooms,createPrivateRoom } from "./rooms";
 import { getRandomWord, WordCategory } from "./words";
+import { Server } from "socket.io"
 
-// Interface for a single game session
+/**
+ * Interface representing a single game session for a room
+ */
 interface GameSession {
-  roomId: string;
-  currentDrawer: User | null;
-  currentWord: string | null;
-  usedWords: Set<string>;
-  roundNumber: number;
-  scores: Map<string, number>; // userId -> score
-  timer?: NodeJS.Timeout;
-  turnTime: number; // e.g., seconds per turn
+    roomId: string;
+    currentDrawer: User | null;
+    currentWord: string | null;
+    usedWords: Set<string>;
+    roundNumber: number;
+    scores: Map<string, number>;
+    drawnYet: Set<string>;
+    timer?: NodeJS.Timeout;
+    turnTime: number;
+    turnStartedAt: number;   // ← ADD THIS
+    correctGuesser: Set<string>;
 }
 
-// Main GameManager class
+/**
+ * GameManager class handles all game logic per room
+ */
 export class GameManager {
-  private sessions: Map<string, GameSession>;
-
-  constructor() {
-    this.sessions = new Map();
-  }
-
-  /**
-   * Create a new game session for a room
-   */
-  createSession(roomId: string, turnTime = 60) {
-    const session: GameSession = {
-      roomId,
-      currentDrawer: null,
-      currentWord: null,
-      usedWords: new Set(),
-      roundNumber: 0,
-      scores: new Map(),
-      turnTime,
-    };
-    this.sessions.set(roomId, session);
-    return session;
-  }
-
-  /**
-   * Start a new round in a game
-   */
-  startRound(roomId: string) {
-    const session = this.sessions.get(roomId);
-    if (!session) {
-      console.error("No active session for room", roomId);
-      return;
+    private sessions: Map<string, GameSession>;
+    private io: Server
+    constructor(io: Server) {
+        this.sessions = new Map();
+        this.io = io;
     }
 
-    // TODO:
-    // 1. Pick a drawer (round-robin from users)
-    // 2. Pick a word based on room difficulty
-    // 3. Reset the canvas for this round
-    // 4. Notify all users who is drawing and the word options
-    // 5. Start turn timer
-  }
 
-  /**
-   * End the current round
-   */
-  endRound(roomId: string) {
+    createSession(roomId: string, turnTime = 60) {
+        const session: GameSession = {
+            roomId,
+            currentDrawer: null,
+            currentWord: null,
+            usedWords: new Set(),
+            roundNumber: 0,
+            scores: new Map(),
+            drawnYet: new Set(),
+            turnTime,
+            turnStartedAt : 0,
+            correctGuesser: new Set()
+        };
+        this.sessions.set(roomId, session);
+        return session;
+    }
+
+    /**
+     * Start a new round: resets round-specific data
+     */
+    startNewRound(roomId: string) {
+        const session = this.sessions.get(roomId);
+        if (!session) return;
+
+        session.roundNumber++;
+        session.drawnYet.clear();
+        session.currentDrawer = null;
+        session.currentWord = null;
+        this.resetCanvas(roomId);
+
+        // Notify users a new round started
+        // broadcastToRoom(roomId, "roundStarted", { roundNumber: session.roundNumber });
+        this.io.in(roomId).emit("roundStarted", {
+            roundNumber: session.roundNumber
+        });
+        // Start first drawer of this round
+        this.startRound(roomId);
+    }
+
+    /**
+     * Start a drawer's turn within the round
+     */
+    startRound(roomId: string) {
+        const session = this.sessions.get(roomId);
+        if (!session) return;
+
+        const room = rooms.get(roomId);
+        if (!room) {
+            console.error("Room not found for startRound");
+            return;
+        }
+
+        const users = getUsersInRoom(roomId);
+        const eligibleDrawers = users.filter(u => !session.drawnYet.has(u.userId));
+
+        if (eligibleDrawers.length === 0) {
+            // All users have drawn, start a new round
+            this.startNewRound(roomId);
+            return;
+        }
+
+        // Pick a random drawer from eligible users
+        const randomIndex = Math.floor(Math.random() * eligibleDrawers.length);
+        const drawer = eligibleDrawers[randomIndex];
+        session.currentDrawer = drawer;
+        session.drawnYet.add(drawer.userId);
+
+        // Pick 3 word candidates
+        const candidates: string[] = [];
+        const difficulty: WordCategory = room.difficulty ?? "normal"; // fallback if undefined
+        while (candidates.length < 3) {
+            const { word, error } = getRandomWord(difficulty, session.usedWords);
+            if (!word) break; // fallback if pool exhausted
+            if (!candidates.includes(word)) {
+                candidates.push(word);
+            }
+        }
+
+        this.resetCanvas(roomId);
+
+        this.io.to(drawer.socketId).emit("chooseWord", {
+            wordOptions: candidates
+        });
+        this.io.in(roomId).emit("newTurn", {
+            drawer: {
+                userId: drawer.userId,
+                username: drawer.username
+            }
+        })
+    }
+    onWordChosen(roomId: string, chosenWord: string) {
+        const session = this.sessions.get(roomId);
+        if (!session) return;
+        if (session.timer) {
+            clearTimeout(session.timer);
+        }
+        session.currentWord = chosenWord;
+        session.usedWords.add(chosenWord);
+        session.turnStartedAt = Date.now();  // ← ADD THIS LINE HERE
+        // Reset canvas before drawing starts
+        this.resetCanvas(roomId); 
+
+        this.io.in(roomId).emit("turnStarted", {
+            drawer: session.currentDrawer,
+            wordLength: chosenWord.length
+        });
+
+        // Start turn timer
+        session.timer = setTimeout(() => {
+            this.endTurn(roomId);
+        }, session.turnTime * 1000);
+    }
+    onGuess(roomId: string, userId: string, guess: string) {
+    const session = this.sessions.get(roomId);
+    if (!session || !session.currentWord) return;
+    if( userId==session.currentDrawer?.userId){
+        return
+    }
+    if(session.correctGuesser.has(userId))
+     {
+        return
+     }
+    if(guess===session.currentWord){
+
+        session.correctGuesser.add(userId)
+        this.updateScore(roomId,userId)
+        this.io.in(roomId).emit("correctGuess",{userId})
+        const totalGuessers = getUsersInRoom(roomId).length - 1; 
+        if (session.correctGuesser.size >= totalGuessers) {
+        clearTimeout(session.timer);
+        this.endTurn(roomId);
+    }
+    }
+     else{
+         this.io.in(roomId).emit("chatMessage", { userId, message: guess });
+     }
+    }
+
+    
+    /**
+     * End a drawer's turn
+     */
+    endTurn(roomId: string) {
     const session = this.sessions.get(roomId);
     if (!session) return;
 
-    // TODO:
-    // 1. Calculate scores
-    // 2. Update session data
-    // 3. Notify users of round results
-  }
+    //  broadcast scores before moving to next turn
+    this.io.in(roomId).emit("scoresUpdated", {
+        scores: Array.from(session.scores.entries())
+    });
 
-  /**
-   * End the game completely
-   */
-  endGame(roomId: string) {
+    this.startRound(roomId);
+}
+
+    broadcastToRoom(roomId: string, event: string, data: any) {
+        const users = getUsersInRoom(roomId);
+        users.forEach(user => {
+            this.io.to(user.socketId).emit(event, data);
+        })
+    }
+    
+    onDisconnect(socketId: string, roomId: string) {
     const session = this.sessions.get(roomId);
     if (!session) return;
 
-    // TODO:
-    // 1. Notify users that game ended
-    // 2. Cleanup session
-    this.sessions.delete(roomId);
-  }
+    if (session.currentDrawer?.socketId === socketId) {
+        clearTimeout(session.timer);
+        this.endTurn(roomId);
+    }
+    }
+    createRoom(roomId: string, host: User, difficulty: "easy" | "medium" | "hard" | "normal") {
+    createPrivateRoom(roomId, host, 15, difficulty);
+    this.createSession(roomId);
+    }
+    /**
+     * End the game completely
+     */
+    endGame(roomId: string) {
+        const session = this.sessions.get(roomId);
+        if (!session) return;
 
-  /**
-   * Record strokes drawn by the current drawer
-   */
-  saveStroke(roomId: string, strokes: Stroke[]) {
-    // Calls saveCanvasState from room.ts
-    return saveCanvasState(roomId, strokes);
-  }
+        // Notify users game ended
+        // broadcastToRoom(roomId, "gameEnded", { scores: Array.from(session.scores) });
 
-  /**
-   * Get the current canvas state for a room
-   */
-  getCanvas(roomId: string) {
-    return getCanvasState(roomId);
-  }
+        // Clear session
+        if (session.timer) clearTimeout(session.timer);
+        this.sessions.delete(roomId);
+    }
+    saveStroke(roomId: string, strokes: Stroke[]) {
+        return saveCanvasState(roomId, strokes);
+    }
 
-  /**
-   * Reset the canvas (e.g., at the start of a round)
-   */
-  resetCanvas(roomId: string) {
-    resetCanvasState(roomId);
-  }
+    /*
+     *
+     * Get current canvas state
+     */
+    getCanvas(roomId: string) {
+        return getCanvasState(roomId);
+    }
 
-  /**
-   * Get or update scores
-   */
-  updateScore(roomId: string, userId: string, points: number) {
-    const session = this.sessions.get(roomId);
-    if (!session) return;
-    const prev = session.scores.get(userId) || 0;
-    session.scores.set(userId, prev + points);
-  }
+    /**
+     * Reset canvas
+     */
+    resetCanvas(roomId: string) {
+        resetCanvasState(roomId);
+    }
 
-  /**
-   * Get current scores for a room
-   */
-  getScores(roomId: string) {
-    const session = this.sessions.get(roomId);
-    return session?.scores;
-  }
+    /**
+     * Update player's score
+     */
+    updateScore(roomId: string, userId: string) {
+        const session = this.sessions.get(roomId);
+        if (!session) return;
+
+        const elapsed = Math.floor((Date.now() - session.turnStartedAt) / 1000);
+        const rt = Math.max(0, session.turnTime - elapsed); // clamp so rt never goes negative
+        const points = Math.round((rt / 60) * 10);
+
+        const prev = session.scores.get(userId) || 0;
+        session.scores.set(userId, prev + points);
+    }
+
+    /**
+     * Get current scores
+     */
+    getScores(roomId: string) {
+        const session = this.sessions.get(roomId);
+        return session?.scores;
+    }
 }
