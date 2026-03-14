@@ -18,16 +18,14 @@ function getWordPool(category: WordCategory): string[] {
 export function getRandomWord(
   category: WordCategory,
   usedWords: Set<string> = new Set()
-): { word?: string; error?: string } {
+): { word?: string } {
   const pool = getWordPool(category).filter(word => !usedWords.has(word));
 
   if (pool.length === 0) {
-    const newpool= getWordPool("normal")
-      const randomWord = newpool[Math.floor(Math.random() * newpool.length)];
-    return { 
-        word: randomWord,
-        error: "No words available in this category" };
-  }
+    const newpool = getWordPool("normal");
+    const randomWord = newpool[Math.floor(Math.random() * newpool.length)];
+    return { word: randomWord };  // ← drop the error, just silently fallback
+}
 
   const randomWord = pool[Math.floor(Math.random() * pool.length)];
   return { word: randomWord };
