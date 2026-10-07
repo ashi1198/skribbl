@@ -1,0 +1,114 @@
+/* Base wrapper setup (ensures clean layout over your blue background) */
+.lobby-page-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;     
+  min-height: 100vh;       
+  width: 100vw;            
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #18759c 0%, #0d4b66 100%); /* Smooth gradient background */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Card layout container */
+.user-Details {
+  display: flex;
+  flex-direction: column;  
+  align-items: center;     
+  gap: 16px;   
+   position: "relative";
+   z-index: 2      ;       
+  width: 90%;
+  max-width: 400px; /* Restricts width gracefully on large monitors */
+  padding: 32px 24px;
+  background-color: rgba(240, 248, 255, 0.95); /* Polished aliceblue with slight transparency */
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+}
+
+/* Typography styles inside the card */
+.user-Details p {
+  color: #333;
+  margin: 4px 0;
+  font-size: 0.95rem;
+}
+
+.user-Details strong {
+  color: #18759c;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+}
+
+/* Form input fields */
+.user-Details input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-Details input:focus {
+  border-color: #18759c;
+  box-shadow: 0 0 0 3px rgba(24, 117, 156, 0.15);
+}
+
+/* Interactive Action Buttons */
+.user-Details button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+/* Primary buttons (Join Public, Join Private, Create Room) */
+.user-Details button:not(:last-child) {
+  background-color: #18759c;
+  color: white;
+  box-shadow: 0 4px 6px rgba(24, 117, 156, 0.2);
+}
+
+.user-Details button:not(:last-child):hover {
+  background-color: #135d7d;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(24, 117, 156, 0.3);
+}
+
+.user-Details button:not(:last-child):active {
+  transform: translateY(0);
+}
+
+/* Secondary Navigation Button (The "Back / Private Room" toggle at the bottom) */
+.user-Details button:last-child {
+  background-color: transparent;
+  color: #18759c;
+  border: 2px solid #18759c;
+  margin-top: 8px;
+}
+
+.user-Details button:last-child:hover {
+  background-color: rgba(24, 117, 156, 0.08);
+}
+
+/* Error message block */
+.user-Details p[style*="color: red"], 
+.user-Details p.error-message {
+  color: #dc2626 !important;
+  font-weight: 500;
+  font-size: 0.85rem;
+  background-color: #fee2e2;
+  padding: 8px 12px;
+  border-radius: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+}

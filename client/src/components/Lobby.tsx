@@ -3,7 +3,8 @@ import socket from "../Socket";
 import type { User } from "../types";
 import type { Dispatch, SetStateAction } from "react";
 import axios from "axios";
-
+import "./Lobby.css";
+import { PointerTrail } from "./PointerTrail";
 interface LobbyProps {
   setCurrentUser: Dispatch<SetStateAction<User | null>>;
 }
@@ -82,44 +83,47 @@ function Lobby({ setCurrentUser }: LobbyProps) {
   };
 
   return (
-    <div className="user-Details">
-      <input
-        type="text"
-        placeholder="Username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
+    <div className="lobby-page-wrapper">
+      <PointerTrail />
+      <div className="user-Details">
+        <input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {!showPrivate && <button onClick={handleJoin}>Join Public Room</button>}
+        {!showPrivate && <button onClick={handleJoin}>Join Public Room</button>}
 
-      {showPrivate && (
-        <>
-          <input
-            placeholder="Enter Room Code"
-            value={roomId}
-            onChange={(e) => setRoomId(e.target.value)}
-          />
-          <button onClick={handleJoinPrivate}>Join</button>
+        {showPrivate && (
+          <>
+            <input
+              placeholder="Enter Room Code"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+            />
+            <button onClick={handleJoinPrivate}>Join</button>
 
-          <p>— or —</p>
+            <p>— or —</p>
 
-          {generatedCode ? (
-            <>
-              <p>
-                Your Code: <strong>{generatedCode}</strong>
-              </p>
-              <button onClick={handleJoinAsHost}>Join as Host</button>
-            </>
-          ) : (
-            <button onClick={handleGenerateCode}>Create Room</button>
-          )}
-        </>
-      )}
-      <button onClick={() => setShowPrivate(!showPrivate)}>
-        {showPrivate ? "Back" : "Private Room"}
-      </button>
+            {generatedCode ? (
+              <>
+                <p>
+                  Your Code: <strong>{generatedCode}</strong>
+                </p>
+                <button onClick={handleJoinAsHost}>Join as Host</button>
+              </>
+            ) : (
+              <button onClick={handleGenerateCode}>Create Room</button>
+            )}
+          </>
+        )}
+        <button onClick={() => setShowPrivate(!showPrivate)}>
+          {showPrivate ? "Back" : "Private Room"}
+        </button>
+      </div>
     </div>
   );
 }
