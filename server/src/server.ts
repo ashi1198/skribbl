@@ -2,7 +2,7 @@ import app from "./app";
 import http from "http";
 import { Server } from "socket.io";
 import { GameManager } from "./gameManager";
-import { initSocketHandler } from "./socket";  // ← import it
+import { initSocketHandler } from "./socketHandler";  // ← import it
 
 const port = 5000;
 
@@ -16,8 +16,9 @@ const io = new Server(server, {
 });
 
 const gameManager = new GameManager(io);
+
 initSocketHandler(io, gameManager);  // ← call it here
 
 server.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+  console.log(`Server listening on port hello ${port}`);
 });

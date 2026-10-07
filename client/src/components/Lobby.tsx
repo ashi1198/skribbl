@@ -1,5 +1,5 @@
 import { useState } from "react";
-import socket from "../socket";
+import socket from "../Socket";
 import { User } from "../types";
 import { Dispatch, SetStateAction } from "react";
 
@@ -12,19 +12,25 @@ function Lobby({ setCurrentUser }: LobbyProps) {
     const [roomId, setRoomId] = useState("");  // optional, empty = public room
 
     const handleJoin = () => {
-        // 1. validate username not empty → return early if empty
         
+        if(!username) return ;
         // 2. generate userId
         const userId = crypto.randomUUID();
 
         // 3. connect socket
         socket.connect();
-
-        // 4. emit joinRoom with username, userId, roomId (roomId optional)
-        // hint: if roomId is empty string pass undefined instead
+        socket.once("connect",()=>{
+            setCurrentUser({
+            socketId:socket.id ?? "",
+            username,
+            userId
+        })
         
-        // 5. setCurrentUser with username, userId, socketId
-        // hint: socket.id gives you the socketId
+        socket.emit("joinRoom",{
+            username,userId,roomId:roomId || undefined});
+        }) 
+        
+       
     };
 
     return (

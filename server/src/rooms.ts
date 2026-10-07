@@ -19,7 +19,7 @@ function generateRoomCode(existingRooms: Map<string, Room>): string {
     return code;
 }
 
-export function createPrivateRoom(roomId: string, host: User, maxPlayers = 15,difficulty:"normal" | "easy" | "hard" | "medium"): Room {
+export function createPrivateRoom(roomId: string, host: User, maxPlayers = 15, difficulty: "normal" | "easy" | "hard" | "medium"): Room {
     const newRoom: Room = {
         id: roomId,
         users: [host],
@@ -30,7 +30,7 @@ export function createPrivateRoom(roomId: string, host: User, maxPlayers = 15,di
     };
     rooms.set(roomId, newRoom);
     socketToRoom.set(host.socketId, roomId);
-    return newRoom; 
+    return newRoom;
 }
 //------------- join room ---------------------------
 //mapping socket to room
@@ -38,22 +38,29 @@ interface JoinRoomResult {
     room?: Room;      // The room if joining succeeds
     error?: string;   // Error message if joining fails
 }
-export function joinRoom(socketId: string, username: string, userId: string, roomId?: string): JoinRoomResult { /* TODO */
+export function joinRoom(socketId:string, username: string, userId: string, roomId?: string): JoinRoomResult { /* TODO */
     if (roomId) {
         const room = rooms.get(roomId);
+        // check if user already in room
+
         if (room) {
+
             if (room.users.length >= room.maxPlayers) {
                 console.log(`Room ${roomId} is full`);
                 return {
                     error: "room is already full"
                 }; // cannot join
             }
+            const alreadyInRoom = room.users.find(u => u.userId === userId);
+            if (alreadyInRoom) {
+                return { error: "User already in room" };
+            }
             // rooms.get(roomId)!.users.push({socketId,username,userId}) this method could have been used for insertion in room 
             // with ! this mark promising compiler get wont return undefined values but we choose another one 
             room.users.push({ socketId, username, userId });
             socketToRoom.set(socketId, room.id);
 
-            return {room };
+            return { room };
         }
         else {
             console.log("No room found with this roomId");
@@ -65,7 +72,7 @@ export function joinRoom(socketId: string, username: string, userId: string, roo
         for (const room of rooms.values()) {
             if (room.isPublic && room.users.length < room.maxPlayers) {
                 room.users.push({ socketId, username, userId });
-                return {room};
+                return { room };
             }
         }
         const newRoomId = generateRoomCode(rooms)
@@ -75,12 +82,12 @@ export function joinRoom(socketId: string, username: string, userId: string, roo
             isPublic: true,
             maxPlayers: 12,
             canvasState: { strokes: [] },
-            difficulty : "normal"
+            difficulty: "normal"
         };
         rooms.set(newRoomId, publicRoom);
         socketToRoom.set(socketId, newRoomId);
 
-        return {room :publicRoom};
+        return { room: publicRoom };
         /*
       yet to implement 
       return info to frontend
@@ -98,19 +105,19 @@ interface leaveRoomResult {
     room?: Room;      // The room if joining succeeds
     error?: string;   // Error message if joining fails
 }
-export function leaveRoom(socketId: string, roomId?: string):leaveRoomResult  {
+export function leaveRoom(socketId: string, roomId?: string): leaveRoomResult {
     // If roomId not passed, try to get it from the mapping
     const targetRoomId = roomId || socketToRoom.get(socketId);
     if (!targetRoomId) {
-        return {error:`No room found for socket ${socketId}`};
+        return { error: `No room found for socket ${socketId}` };
     }
 
     const room = rooms.get(targetRoomId);
     if (!room) {
-     
+
         socketToRoom.delete(socketId);
-           return {error:`Room ${targetRoomId} does not exist`}
-     
+        return { error: `Room ${targetRoomId} does not exist` }
+
     }
 
     // Remove the user from the room
@@ -122,37 +129,37 @@ export function leaveRoom(socketId: string, roomId?: string):leaveRoomResult  {
     // If room is empty after removal, delete it
     if (room.users.length === 0) {
         rooms.delete(targetRoomId);
-        
-        return  {error:`Room ${targetRoomId} deleted (empty)`};
+
+        return { error: `Room ${targetRoomId} deleted (empty)` };
     }
 
-    return {room}; // return updated room
+    return { room }; // return updated room
 }
-export function getUsersInRoom(roomId: string):User[] { 
+export function getUsersInRoom(roomId: string): User[] {
     const room = rooms.get(roomId)
-    return room? room.users : [];
+    return room ? room.users : [];
 }
 
-export function saveCanvasState(roomId: string, newStrokes:Stroke[]): {room ? : Room ; error? : string}{  
+export function saveCanvasState(roomId: string, newStrokes: Stroke[]): { room?: Room; error?: string } {
     const room = rooms.get(roomId)
-    if(room){
-         if (!room.canvasState) {
-    room.canvasState = { strokes: [] };
-  }
-     room.canvasState.strokes.push(...newStrokes)
-     return {room}
+    if (room) {
+        if (!room.canvasState) {
+            room.canvasState = { strokes: [] };
+        }
+        room.canvasState.strokes.push(...newStrokes)
+        return { room }
     }
-    return {error :"room not found"}
+    return { error: "room not found" }
     // todo:: if stroke failed to deliever send it again
 
- }
+}
 export function getCanvasState(roomId: string): CanvasState | undefined {
-   const room = rooms.get(roomId)
-    if(room){
-        return room.canvasState ?? {strokes :[]}
+    const room = rooms.get(roomId)
+    if (room) {
+        return room.canvasState ?? { strokes: [] }
     }
- } 
- export function resetCanvasState(roomId: string) {
-    const room= rooms.get(roomId)
-    if(room) room.canvasState ={strokes :[]}
- }
+}
+export function resetCanvasState(roomId: string) {
+    const room = rooms.get(roomId)
+    if (room) room.canvasState = { strokes: [] }
+}

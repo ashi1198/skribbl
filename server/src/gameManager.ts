@@ -118,7 +118,8 @@ export class GameManager {
         }
 
         this.resetCanvas(roomId);
-
+        
+        this.io.in(roomId).emit("clearCanvas"); // ← ADD THIS
         this.io.to(drawer.socketId).emit("chooseWord", {
             wordOptions: candidates
         });
@@ -180,17 +181,19 @@ export class GameManager {
     /**
      * End a drawer's turn
      */
-    endTurn(roomId: string) {
-        const session = this.sessions.get(roomId);
-        if (!session) return;
+   endTurn(roomId: string) {
+    const session = this.sessions.get(roomId);
+    if (!session) return;
 
-        //  broadcast scores before moving to next turn
-        this.io.in(roomId).emit("scoresUpdated", {
-            scores: Array.from(session.scores.entries())
-        });
+    session.correctGuesser.clear(); // ← ADD THIS
 
-        this.startRound(roomId);
-    }
+    this.io.in(roomId).emit("scoresUpdated", {
+        scores: Array.from(session.scores.entries())
+    });
+
+    this.startRound(roomId);
+
+}   
 
     broadcastToRoom(roomId: string, event: string, data: any) {
         const users = getUsersInRoom(roomId);
