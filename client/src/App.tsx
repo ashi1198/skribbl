@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import socket from "./Socket"
-import { Room, User } from "./types"
+import type { Room, User } from "./types"
 import Lobby from "./components/Lobby"
 type GameScreen = "lobby" | "waiting" | "playing" | "ended"
 function App() {
@@ -12,6 +12,7 @@ function App() {
   useEffect(() => {
     socket.on("roomJoined", (data:{room:Room}) => {
       setScreen("waiting");
+      console.log("on waiting page")
       setRoom(data.room)
     });
     socket.on("roundStarted",()=>{
@@ -31,7 +32,7 @@ function App() {
   return (
     <>
       {screen === "lobby" && <Lobby setCurrentUser={setCurrentUser} />}
-        {screen === "waiting" && <div>Waiting for host to start...</div>}
+        {screen === "waiting" && Waiting{} }
         {screen === "playing" && <div>Game screen coming soon</div>}
         {screen === "ended" && <div>Game Over!</div>}
     </>

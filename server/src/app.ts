@@ -26,6 +26,10 @@ app.get("/room/:id", (req, res) => {
         difficulty: room.difficulty,
         isFull: room.users.length >= room.maxPlayers
     });
+      if (room.users.length >= room.maxPlayers) {
+        res.status(403).json({ error: "Room is full" });
+        return;
+    }
 });
 
 // Create a private room
