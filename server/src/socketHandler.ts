@@ -77,7 +77,29 @@ export function initSocketHandler(io: Server, gameManager: GameManager) {
       if (!currentRoomId) return;
       gameManager.onGuess(currentRoomId, data.userId, data.guess);
     });
+    socket.on(
+      "updateSettings",
+      (data: {
+        difficulty?: "easy" | "medium" | "hard" | "normal";
+        maxPlayers?: number;
+      }) => {
+        if (!currentRoomId) return;
 
+        // only host can change settings
+        const room = rooms.get(currentRoomId);
+        if (room?.users[0].socketId !== socket.id) return;
+
+        // update room
+        if (data.difficulty) room.difficulty = data.difficulty;
+        if (data.maxPlayers) room.maxPlayers = data.maxPlayers;
+
+        // broadcast new settings to everyone in room
+        io.in(currentRoomId).emit("settingsUpdated", {
+          difficulty: room.difficulty,
+          maxPlayers: room.maxPlayers,
+        });
+      },
+    );
     socket.on("disconnect", () => {
       if (!currentRoomId) return;
 

@@ -33,7 +33,7 @@ function Waiting({ room, currentUser }: WaitingProps) {
       {/* 3. Start button — only visible if isHost */}
       {/* 4. "Waiting for host to start..." — visible if not host */}
       <div className="game-settings-panel">
-        
+        <select className="difficulty" value={}></select>
       </div>
     </div>
   );
