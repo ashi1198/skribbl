@@ -1,0 +1,124 @@
+/* Waiting Page */
+.waiting-wrapper {
+    min-height: 100vh;
+    background-color: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    color: #ffffff;
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 32px;
+    background-color: #16213e;
+    border-bottom: 1px solid #ffffff15;
+}
+
+.roomId {
+    font-size: 16px;
+    color: #ffffff80;
+    letter-spacing: 1px;
+}
+
+.roomId strong {
+    color: #e94560;
+    font-size: 20px;
+    letter-spacing: 4px;
+    margin-left: 8px;
+}
+
+/* Body — two column layout */
+.waiting-body {
+    display: flex;
+    flex: 1;
+    gap: 0;
+    overflow: hidden;
+}
+
+/* Players Panel */
+.user-display-panel {
+    width: 280px;
+    min-width: 280px;
+    background-color: #16213e;
+    border-right: 1px solid #ffffff15;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+}
+
+.user-display-panel h3 {
+    color: #ffffff60;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.user-name {
+    padding: 10px 14px;
+    background-color: #0f3460;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Settings Panel */
+
+/* Footer */
+.waiting-footer {
+    padding: 20px 32px;
+    background-color: #16213e;
+    border-top: 1px solid #ffffff15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-start {
+    padding: 14px 48px;
+    background-color: #e94560;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    letter-spacing: 1px;
+}
+
+.btn-start:hover {
+    opacity: 0.9;
+    transform: scale(1.03);
+}
+
+.btn-start:active {
+    transform: scale(0.97);
+}
+
+.waiting-text {
+    color: #ffffff50;
+    font-size: 15px;
+    font-style: italic;
+}
+
+/* Notification */
+.notification {
+    background-color: #e9456020;
+    border: 1px solid #e9456050;
+    color: #e94560;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
+    margin: 0 32px;
+}

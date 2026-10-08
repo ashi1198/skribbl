@@ -26,12 +26,14 @@ export function initSocketHandler(io: Server, gameManager: GameManager) {
           socket.emit("roomJoined", {
             room: result.room,
             gameState: session ? "playing" : "waiting",
+
             // only send if game is running
             currentDrawer: session?.currentDrawer ?? null,
             wordLength: session?.currentWord?.length ?? null,
             scores: session ? Array.from(session.scores.entries()) : [],
             canvasState: result.room.canvasState ?? { strokes: [] },
           });
+
           socket.to(result.room.id).emit("userJoined", {
             userId: data.userId,
             username: data.username,
@@ -48,12 +50,22 @@ export function initSocketHandler(io: Server, gameManager: GameManager) {
         socket.emit("error", { message: "You are not in a room" });
         return;
       }
+
       const room = rooms.get(currentRoomId);
-      const host = room?.users[0];
-      if (host?.socketId !== socket.id) {
+      if (!room) return;
+
+      if (room.users[0].socketId !== socket.id) {
         socket.emit("error", { message: "Only the host can start the game" });
         return;
       }
+
+      // create session with room settings ← THIS IS THE KEY FIX
+      gameManager.createSession(
+        currentRoomId,
+        room.turnTime ?? 60, // use room settings
+        room.rounds ?? 3,
+      );
+
       gameManager.startNewRound(currentRoomId);
     });
 
@@ -80,24 +92,34 @@ export function initSocketHandler(io: Server, gameManager: GameManager) {
     socket.on(
       "updateSettings",
       (data: {
-        difficulty?: "easy" | "medium" | "hard" | "normal";
-        maxPlayers?: number;
+        difficulty: "easy" | "medium" | "hard" | "normal";
+        maxPlayers: number;
+        rounds: number;
+        turnTime: number;
       }) => {
         if (!currentRoomId) return;
 
-        // only host can change settings
         const room = rooms.get(currentRoomId);
-        if (room?.users[0].socketId !== socket.id) return;
+        if (!room) return;
+
+        // only host can change settings
+        if (room.users[0].socketId !== socket.id) return;
 
         // update room
-        if (data.difficulty) room.difficulty = data.difficulty;
-        if (data.maxPlayers) room.maxPlayers = data.maxPlayers;
+        room.difficulty = data.difficulty;
+        room.maxPlayers = data.maxPlayers;
+        room.rounds = data.rounds; // ← add
+        room.turnTime = data.turnTime; // ← add
 
-        // broadcast new settings to everyone in room
-        io.in(currentRoomId).emit("settingsUpdated", {
-          difficulty: room.difficulty,
-          maxPlayers: room.maxPlayers,
-        });
+        // update session if exists
+        const session = gameManager.getSession(currentRoomId);
+        if (session) {
+          session.maxRounds = data.rounds;
+          session.turnTime = data.turnTime;
+        }
+
+        // broadcast to everyone
+        io.in(currentRoomId).emit("settingsUpdated", data);
       },
     );
     socket.on("disconnect", () => {
@@ -109,7 +131,7 @@ export function initSocketHandler(io: Server, gameManager: GameManager) {
       leaveRoom(socket.id);
       gameManager.onDisconnect(socket.id, currentRoomId);
       socket.to(currentRoomId).emit("userLeft", { socketId: socket.id });
-
+      console.log("user disconnected", socket.id, "from room", currentRoomId);
       // if host left, notify everyone about new host
       if (wasHost) {
         const newHost = rooms.get(currentRoomId)?.users[0];

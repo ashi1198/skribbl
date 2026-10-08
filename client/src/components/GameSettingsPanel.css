@@ -1,0 +1,48 @@
+.game-settings-panel {
+    flex: 1;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.game-settings-panel h3 {
+    color: #ffffff60;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.game-settings-panel label {
+    font-size: 13px;
+    color: #ffffff60;
+    margin-bottom: -8px;
+}
+
+.game-settings-panel select {
+    padding: 10px 14px;
+    background-color: #0f3460;
+    color: #ffffff;
+    border: 2px solid #ffffff15;
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+    cursor: pointer;
+    transition: border 0.2s;
+    width: 200px;
+}
+
+.game-settings-panel select:focus {
+    border-color: #e94560;
+}
+
+.game-settings-panel p {
+    font-size: 15px;
+    color: #ffffff90;
+    padding: 10px 14px;
+    background-color: #0f3460;
+    border-radius: 8px;
+    width: fit-content;
+}
