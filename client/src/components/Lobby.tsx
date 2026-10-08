@@ -5,6 +5,7 @@ import type { Dispatch, SetStateAction } from "react";
 import axios from "axios";
 import "./Lobby.css";
 import { PointerTrail } from "./PointerTrail";
+
 interface LobbyProps {
   setCurrentUser: Dispatch<SetStateAction<User | null>>;
 }
@@ -16,7 +17,7 @@ function Lobby({ setCurrentUser }: LobbyProps) {
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const connectAndJoin = (roomId?: string) => {
+  const connectAndJoin = (targetRoomId?: string) => {
     if (!username) {
       setError("Please enter a username");
       return;
@@ -25,18 +26,17 @@ function Lobby({ setCurrentUser }: LobbyProps) {
     socket.connect();
     socket.once("connect", () => {
       setCurrentUser({ socketId: socket.id!, username, userId });
-      socket.emit("joinRoom", { username, userId, roomId });
+      socket.emit("joinRoom", { username, userId, roomId: targetRoomId });
     });
   };
 
-  // join public room
   const handleJoin = () => {
+    setError(null);
     connectAndJoin(undefined);
   };
 
-  // join someone else's private room
-
   const handleJoinPrivate = async () => {
+    setError(null);
     if (!roomId) {
       setError("Please enter a room code");
       return;
@@ -45,20 +45,16 @@ function Lobby({ setCurrentUser }: LobbyProps) {
       await axios.get(`http://localhost:5000/room/${roomId}`);
       connectAndJoin(roomId);
     } catch (err) {
-      // 1. Check if the error is a valid Axios error
       if (axios.isAxiosError(err)) {
-        const backendError =
-          err.response?.data?.error || err.response?.data?.message;
-        setError(backendError || "Room not found");
+        setError(err.response?.data?.error || "Room not found");
       } else {
-        // 2. Handle generic non-network errors (e.g., code crashes)
         setError("An unexpected error occurred");
       }
     }
   };
 
-  // generate a new room code
   const handleGenerateCode = async () => {
+    setError(null);
     try {
       const { data } = await axios.post("http://localhost:5000/room/create", {
         difficulty: "normal",
@@ -66,19 +62,16 @@ function Lobby({ setCurrentUser }: LobbyProps) {
       });
       setGeneratedCode(data.roomId);
     } catch (err) {
-      // 1. Check if the error is a valid Axios error
       if (axios.isAxiosError(err)) {
-        const backendError =
-          err.response?.data?.error || err.response?.data?.message;
-        setError(backendError || "Failed to create room");
+        setError(err.response?.data?.error || "Failed to create room");
       } else {
         setError("Failed to create room");
       }
     }
   };
 
-  // join as host after generating code
   const handleJoinAsHost = () => {
+    setError(null);
     if (generatedCode) connectAndJoin(generatedCode);
   };
 
@@ -86,6 +79,10 @@ function Lobby({ setCurrentUser }: LobbyProps) {
     <div className="lobby-page-wrapper">
       <PointerTrail />
       <div className="user-Details">
+        <h1 className="lobby-title">
+          skrib<span>bl</span>
+        </h1>
+
         <input
           type="text"
           placeholder="Username"
@@ -93,9 +90,13 @@ function Lobby({ setCurrentUser }: LobbyProps) {
           onChange={(e) => setUsername(e.target.value)}
         />
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p className="error-text">{error}</p>}
 
-        {!showPrivate && <button onClick={handleJoin}>Join Public Room</button>}
+        {!showPrivate && (
+          <button className="btn-primary" onClick={handleJoin}>
+            Join Public Room
+          </button>
+        )}
 
         {showPrivate && (
           <>
@@ -104,24 +105,32 @@ function Lobby({ setCurrentUser }: LobbyProps) {
               value={roomId}
               onChange={(e) => setRoomId(e.target.value)}
             />
-            <button onClick={handleJoinPrivate}>Join</button>
+            <button className="btn-private" onClick={handleJoinPrivate}>
+              Join
+            </button>
 
-            <p>— or —</p>
+            <p className="divider">— or —</p>
 
             {generatedCode ? (
               <>
-                <p>
-                  Your Code: <strong>{generatedCode}</strong>
-                </p>
-                <button onClick={handleJoinAsHost}>Join as Host</button>
+                <p className="room-code">{generatedCode}</p>
+                <button className="btn-primary" onClick={handleJoinAsHost}>
+                  Join as Host
+                </button>
               </>
             ) : (
-              <button onClick={handleGenerateCode}>Create Room</button>
+              <button className="btn-private" onClick={handleGenerateCode}>
+                Create Room
+              </button>
             )}
           </>
         )}
-        <button onClick={() => setShowPrivate(!showPrivate)}>
-          {showPrivate ? "Back" : "Private Room"}
+
+        <button
+          className="btn-secondary"
+          onClick={() => setShowPrivate(!showPrivate)}
+        >
+          {showPrivate ? "← Back" : "Private Room"}
         </button>
       </div>
     </div>
