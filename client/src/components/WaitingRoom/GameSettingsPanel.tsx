@@ -15,7 +15,7 @@ export function GameSettingsPanel({
     <>
       <h3>Game Settings</h3>
       {/* Difficulty Setting */}
-      <label>Difficulty</label>
+      <label className="setting-row">Difficulty</label>
       <select
         value={settings.difficulty}
         disabled={!isHost} // 👑 Disables the select if user is a guest
@@ -27,7 +27,7 @@ export function GameSettingsPanel({
         <option value="hard">Hard</option>
       </select>
       {/* Max Players Setting */}
-      <label>Max Players</label>
+      <label className="setting-row">Max Players</label>
       <select
         value={settings.maxPlayers}
         disabled={!isHost}
@@ -42,7 +42,7 @@ export function GameSettingsPanel({
         ))}
       </select>
       {/* Rounds Setting */}
-      <label>Rounds</label>
+      <label className="setting-row">Rounds</label>
       <select
         value={settings.rounds}
         disabled={!isHost}
@@ -55,7 +55,7 @@ export function GameSettingsPanel({
         ))}
       </select>
       {/* Turn Time Setting */}
-      <label>Turn Time</label>
+      <label className="setting-row">Turn Time</label>
       <select
         value={settings.turnTime}
         disabled={!isHost}

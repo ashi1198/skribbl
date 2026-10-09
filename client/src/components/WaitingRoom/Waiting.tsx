@@ -3,6 +3,10 @@ import socket from "../../Socket";
 import type { User, Room } from "../../types";
 import { GameSettingsPanel } from "./GameSettingsPanel";
 import "./Waiting.css";
+import Chat from "../chat/Chat";
+
+// in JSX inside waiting-body
+
 interface WaitingProps {
   room: Room;
   currentUser: User;
@@ -89,6 +93,8 @@ function Waiting({ room, currentUser }: WaitingProps) {
             </>
           )}
         </div>
+
+        <Chat currentUserId={currentUser.userId} isGameChat={false} />
       </div>
 
       {/* bottom action */}
