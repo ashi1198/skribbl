@@ -14,7 +14,6 @@ export function GameSettingsPanel({
   return (
     <>
       <h3>Game Settings</h3>
-
       {/* Difficulty Setting */}
       <label>Difficulty</label>
       <select
@@ -27,7 +26,6 @@ export function GameSettingsPanel({
         <option value="normal">Normal</option>
         <option value="hard">Hard</option>
       </select>
-
       {/* Max Players Setting */}
       <label>Max Players</label>
       <select
@@ -43,7 +41,6 @@ export function GameSettingsPanel({
           </option>
         ))}
       </select>
-
       {/* Rounds Setting */}
       <label>Rounds</label>
       <select
@@ -57,7 +54,6 @@ export function GameSettingsPanel({
           </option>
         ))}
       </select>
-
       {/* Turn Time Setting */}
       <label>Turn Time</label>
       <select

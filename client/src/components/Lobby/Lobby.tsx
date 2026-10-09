@@ -1,6 +1,6 @@
 import { useState } from "react";
-import socket from "../Socket";
-import type { User } from "../types";
+import socket from "../../Socket";
+import type { User } from "../../types";
 import type { Dispatch, SetStateAction } from "react";
 import axios from "axios";
 import "./Lobby.css";

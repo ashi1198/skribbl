@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import socket from "../Socket";
-import type { User, Room } from "../types";
+import socket from "../../Socket";
+import type { User, Room } from "../../types";
 import { GameSettingsPanel } from "./GameSettingsPanel";
 import "./Waiting.css";
 interface WaitingProps {

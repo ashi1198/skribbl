@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import socket from "./Socket";
 import type { Room, User } from "./types";
-import Lobby from "./components/Lobby";
-import Waiting from "./components/Waiting";
+import Lobby from "./components/Lobby/Lobby";
+import Waiting from "./components/waitingRoom/Waiting";
 
 type GameScreen = "lobby" | "waiting" | "playing" | "ended";
 
@@ -82,6 +82,7 @@ function App() {
       socket.off("gameEnded");
       socket.off("userJoined");
       socket.off("userLeft");
+      socket.off("hostChanged");
     };
   }, []);
 

@@ -122,6 +122,19 @@ export function initSocketHandler(io: Server, gameManager: GameManager) {
         io.in(currentRoomId).emit("settingsUpdated", data);
       },
     );
+    socket.on("message", (data: { message: string }) => {
+      if (!currentRoomId) return;
+
+      const room = rooms.get(currentRoomId);
+      const user = room?.users.find((u) => u.socketId === socket.id);
+      if (!user) return;
+
+      io.in(currentRoomId).emit("message", {
+        userId: user.userId,
+        username: user.username,
+        message: data.message,
+      });
+    });
     socket.on("disconnect", () => {
       if (!currentRoomId) return;
 
